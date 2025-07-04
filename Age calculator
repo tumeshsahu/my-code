@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Age Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Set the background image */
+            background-image: url('https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?q=80&w=2076&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; /* This makes the background stationary during scroll */
+        }
+        /* Custom focus style for accessibility */
+        .custom-focus:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.6);
+        }
+        /* Animation for the result display */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 transition-colors duration-500">
+
+    <div class="w-full max-w-md mx-auto bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl shadow-2xl p-6 md:p-8">
+        
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white">Age Calculator</h1>
+            <p class="text-gray-600 dark:text-gray-300 mt-2">Enter your date of birth to find out your age.</p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="space-y-4">
+            <div>
+                <label for="dob" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Your Date of Birth</label>
+                <input type="date" id="dob" name="dob" class="custom-focus block w-full px-4 py-3 bg-gray-50/80 dark:bg-gray-700/80 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500 transition duration-300" max="">
+            </div>
+
+            <button id="calculateBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800">
+                Calculate Age
+            </button>
+        </div>
+
+        <!-- Result Section -->
+        <div id="result" class="mt-8 text-center">
+            <!-- Results will be displayed here -->
+        </div>
+
+    </div>
+
+    <script>
+        // Set the max date for the input to today to prevent selecting future dates.
+        const dobInput = document.getElementById('dob');
+        const today = new Date();
+        const todayString = today.toISOString().split('T')[0];
+        dobInput.setAttribute('max', todayString);
+
+        const calculateBtn = document.getElementById('calculateBtn');
+        const resultDiv = document.getElementById('result');
+
+        // --- Event Listener ---
+        calculateBtn.addEventListener('click', calculateAge);
+        dobInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                calculateAge();
+            }
+        });
+
+        /**
+         * Main function to calculate and display the age.
+         */
+        function calculateAge() {
+            const dobValue = dobInput.value;
+            if (!dobValue) {
+                displayError("Please select your date of birth.");
+                return;
+            }
+
+            const birthDate = new Date(dobValue);
+            const currentDate = new Date();
+
+            // --- Validation ---
+            if (birthDate > currentDate) {
+                displayError("Birth date cannot be in the future.");
+                return;
+            }
+
+            // --- Calculation ---
+            let years = currentDate.getFullYear() - birthDate.getFullYear();
+            let months = currentDate.getMonth() - birthDate.getMonth();
+            let days = currentDate.getDate() - birthDate.getDate();
+
+            // Adjust months and years if the current date's month/day is before the birth date's month/day
+            if (days < 0) {
+                // Borrow days from the previous month
+                months--;
+                const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
+                days += lastMonth.getDate();
+            }
+
+            if (months < 0) {
+                // Borrow months from the previous year
+                years--;
+                months += 12;
+            }
+
+            displayResult(years, months, days);
+        }
+
+        /**
+         * Displays the calculated age in the result container.
+         * @param {number} years - The calculated years.
+         * @param {number} months - The calculated months.
+         * @param {number} days - The calculated days.
+         */
+        function displayResult(years, months, days) {
+            resultDiv.innerHTML = `
+                <div class="fade-in border-t border-gray-200 dark:border-gray-700 pt-6">
+                    <p class="text-lg text-gray-600 dark:text-gray-300 mb-2">You are</p>
+                    <div class="flex justify-center items-end space-x-2 md:space-x-4">
+                        <div class="p-2">
+                            <span class="text-4xl md:text-5xl font-bold text-blue-600 dark:text-blue-400">${years}</span>
+                            <span class="block text-sm text-gray-500 dark:text-gray-400">Years</span>
+                        </div>
+                        <div class="p-2">
+                            <span class="text-4xl md:text-5xl font-bold text-blue-600 dark:text-blue-400">${months}</span>
+                            <span class="block text-sm text-gray-500 dark:text-gray-400">Months</span>
+                        </div>
+                        <div class="p-2">
+                            <span class="text-4xl md:text-5xl font-bold text-blue-600 dark:text-blue-400">${days}</span>
+                            <span class="block text-sm text-gray-500 dark:text-gray-400">Days</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * Displays an error message in the result container.
+         * @param {string} message - The error message to display.
+         */
+        function displayError(message) {
+            resultDiv.innerHTML = `
+                <div class="fade-in text-red-500 font-medium p-3 bg-red-100/90 dark:bg-red-900/70 rounded-lg">
+                    ${message}
+                </div>
+            `;
+        }
+    </script>
+
+</body>
+</html>
